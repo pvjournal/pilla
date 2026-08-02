@@ -9,5 +9,6 @@ authors:
 keywords: [pharmaceutical, geometry, information-encoding, boundary-representation, recursive-decomposition, anti-counterfeiting]
 license: cc-by-nc-nd-4.0
 repository-code: "https://github.com/pvjournal/pilla"
+doi: "10.5281/zenodo.21764570"
 version: "1.0.0"
 date-released: "2026-08-02"

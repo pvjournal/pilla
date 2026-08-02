@@ -35,4 +35,4 @@ Different observers read the **same** surface at different magnification.
 ## Author
 Abhishek Choudhary · AyeAI · ORCID 0009-0002-0684-8320
 
-**DOI:** _pending mint_
+**DOI:** 10.5281/zenodo.21764570
