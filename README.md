@@ -9,8 +9,7 @@ A manufactured pharmaceutical tablet is a **recursively stratified engineering s
 whose geometry simultaneously supports structural function, human-readable communication,
 machine-readable identification and multiscale information encoding — with achievable
 capacity jointly constrained by geometry, manufacturing physics, metrology and clinical
-usability. *Geometry is the information; it is not stored in the tablet — the tablet's
-surface **is** the message.*
+usability. *Geometry is the information; the tablet's surface **is** the message.*
 
 ## Five recursive geometric layers (not software layers)
 1. **Macroscopic** — colour, shape, size, embossed name → the patient
@@ -30,8 +29,8 @@ Different observers read the **same** surface at different magnification.
 - `docs/index.html` — full interactive article + 3D simulator (open in a browser)
 - `src/pill-simulator-3d.js` — three.js parametric pill renderer
 - `POSTER-CRITIQUE.md` — 15 errors in the earlier AI poster, each marked ❌
+- `misty.json` — canonical DOI metadata (Zenodo/DataCite/CFF derive from it)
 - `CITATION.cff` — structured citation
-- `MINT-RUNBOOK.md` — reference for the publication step (the seed script performs it)
 
 ## Author
 Abhishek Choudhary · AyeAI · ORCID 0009-0002-0684-8320

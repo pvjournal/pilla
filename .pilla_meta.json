@@ -1,0 +1,5 @@
+{ "title":"PILLA: Parametric Information Layering Logic – Anatemnein",
+  "creators":[{"name":"Choudhary, Abhishek","affiliation":"AyeAI","orcid":"0009-0002-0684-8320"}],
+  "description":"A geometric framework for pharmaceutical surfaces as recursively addressable, multiscale information substrates.",
+  "keywords":["pharmaceutical","geometry","information-encoding","boundary-representation"],
+  "license":"cc-zero" }

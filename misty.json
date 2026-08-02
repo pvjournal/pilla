@@ -1,0 +1,15 @@
+{
+  "title": "PILLA: Parametric Information Layering Logic – Anatemnein",
+  "description": "A geometric framework in which the manufactured surface of a pharmaceutical tablet becomes a recursively addressable, multiscale information substrate — simultaneously supporting human readability, clinical guidance, machine-readable identification, and anti-counterfeiting through engineered geometry, colour and surface texture. © 1993–2026 Abhishek Choudhary. All rights reserved.",
+  "creators": [
+    { "name": "Choudhary, Abhishek", "affiliation": "AyeAI", "orcid": "0009-0002-0684-8320" }
+  ],
+  "license": "cc-by-nc-nd-4.0",
+  "upload_type": "publication",
+  "publication_type": "article",
+  "access_right": "open",
+  "version": "1.0.0",
+  "language": "eng",
+  "keywords": ["pharmaceutical","geometry","information-encoding","boundary-representation","recursive-decomposition","anti-counterfeiting","tablet-design"],
+  "repository": "https://github.com/pvjournal/pilla"
+}

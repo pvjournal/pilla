@@ -7,7 +7,7 @@ authors:
     orcid: "https://orcid.org/0009-0002-0684-8320"
     affiliation: AyeAI
 keywords: [pharmaceutical, geometry, information-encoding, boundary-representation, recursive-decomposition, anti-counterfeiting]
-license: CC0-1.0
+license: cc-by-nc-nd-4.0
 repository-code: "https://github.com/pvjournal/pilla"
 version: "1.0.0"
 date-released: "2026-08-02"
