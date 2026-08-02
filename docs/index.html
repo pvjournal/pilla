@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PILLA — Parametric Information Layering Logic</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,sans-serif; line-height:1.75; color:#222;
+         background:linear-gradient(135deg,#f5f7fa,#c3cfe2); min-height:100vh; padding:18px; }
+  .container { max-width:1400px; margin:0 auto; background:#fff; border-radius:12px;
+               box-shadow:0 10px 40px rgba(0,0,0,.12); overflow:hidden; }
+  header { background:linear-gradient(135deg,#4a3f8f,#6a4fb0); color:#fff; padding:44px 40px; text-align:center; }
+  header .mark { width:96px; height:96px; margin:0 auto 16px; }
+  header h1 { font-size:2.6em; letter-spacing:2px; }
+  header .sub { font-size:1.15em; opacity:.95; margin-top:6px; }
+  header .anat { font-style:italic; opacity:.8; font-size:.95em; margin-top:4px; }
+  header .cc { font-size:.82em; opacity:.85; margin-top:18px; border-top:1px solid rgba(255,255,255,.3); padding-top:12px; }
+  .nav { display:flex; flex-wrap:wrap; gap:8px; padding:18px 40px; border-bottom:2px solid #eee; }
+  .nav button { background:#eef; color:#4a3f8f; border:none; padding:8px 16px; border-radius:18px;
+                font-weight:600; cursor:pointer; font-size:.9em; }
+  .nav button.active { background:linear-gradient(135deg,#4a3f8f,#6a4fb0); color:#fff; }
+  .body { padding:36px 40px; }
+  .section { display:none; animation:fade .3s; }
+  .section.active { display:block; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+  h2 { color:#4a3f8f; font-size:1.9em; border-bottom:3px solid #4a3f8f; padding-bottom:8px; margin-bottom:18px; }
+  h3 { color:#6a4fb0; margin:24px 0 12px; }
+  p { margin-bottom:14px; text-align:justify; color:#444; }
+  ul { margin:0 0 14px 22px; }
+  .box { background:linear-gradient(135deg,#4a3f8f14,#6a4fb014); padding:14px 18px; margin:14px 0;
+         border-left:4px solid #4a3f8f; border-radius:6px; }
+  .math { background:#f6f7fb; border-left:4px solid #4a3f8f; padding:16px 18px; margin:16px 0;
+          font-family:'Courier New',monospace; border-radius:4px; white-space:pre-wrap; }
+  .diagram { background:#f6f7fb; padding:18px; margin:16px 0; border-radius:8px; font-family:monospace;
+             white-space:pre; overflow-x:auto; color:#4a3f8f; font-weight:600; line-height:1.5; }
+  table { width:100%; border-collapse:collapse; margin:16px 0; }
+  th,td { padding:10px 12px; text-align:left; border-bottom:1px solid #ddd; }
+  th { background:#4a3f8f; color:#fff; }
+  tr:hover td { background:#f6f7fb; }
+  .err { background:#fdecea; border-left:4px solid #e04030; padding:14px 18px; margin:14px 0; border-radius:6px; }
+  .err b { color:#c0281a; }
+  .cross { color:#e04030; font-weight:700; }
+  .ok { color:#2e8b47; font-weight:700; }
+  /* simulator */
+  .simwrap { display:grid; grid-template-columns:1fr 320px; gap:20px; }
+  #sim { width:100%; height:520px; border-radius:10px; box-shadow:inset 0 0 0 1px #ddd; cursor:grab; background:#eef2fa; }
+  #sim:active { cursor:grabbing; }
+  .ctrl { background:#f6f7fb; border-radius:10px; padding:16px; }
+  .ctrl h4 { color:#4a3f8f; margin:14px 0 8px; font-size:.95em; text-transform:uppercase; letter-spacing:.5px; }
+  .ctrl h4:first-child { margin-top:0; }
+  .row { display:flex; align-items:center; justify-content:space-between; margin:8px 0; gap:8px; }
+  .row label { font-size:.85em; color:#555; }
+  .row input[type=range] { width:150px; }
+  .row input[type=color] { width:42px; height:28px; border:none; border-radius:5px; cursor:pointer; }
+  .row input[type=text] { flex:1; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:.85em; }
+  .zoombtns { display:flex; gap:6px; flex-wrap:wrap; }
+  .zoombtns button { flex:1; background:#eef; color:#4a3f8f; border:none; padding:8px; border-radius:6px;
+                     cursor:pointer; font-size:.78em; font-weight:600; }
+  .zoombtns button.active { background:#4a3f8f; color:#fff; }
+  .legend { font-size:.8em; color:#666; margin-top:10px; line-height:1.6; }
+  .swatch { display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+  footer { background:#2b2b33; color:#ddd; text-align:center; padding:18px; font-size:.85em; }
+  @media(max-width:1000px){ .simwrap{grid-template-columns:1fr} #sim{height:400px} }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <svg class="mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="PILLA logo placeholder">
+      <ellipse cx="50" cy="50" rx="42" ry="26" fill="none" stroke="#fff" stroke-width="3"/>
+      <line x1="50" y1="24" x2="50" y2="76" stroke="#fff" stroke-width="3"/>
+      <path d="M30 44 L44 44 M56 44 L70 44 M30 56 L40 56 M60 56 L70 56" stroke="#ffd257" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="72" cy="30" r="4" fill="#ffd257"/>
+      <path d="M72 30 L62 40" stroke="#ffd257" stroke-width="2"/>
+    </svg>
+    <h1>PILLA</h1>
+    <div class="sub">Parametric Information Layering Logic</div>
+    <div class="anat">Anatemnein — the tablet that writes upon itself</div>
+    <div class="cc">© 1993–2026 Abhishek Choudhary. All rights reserved.</div>
+  </header>
+
+  <div class="nav" id="nav"></div>
+  <div class="body" id="body">
+
+    <div class="section active" data-tab="Abstract">
+      <h2>Abstract</h2>
+      <p>Modern pharmaceutical tablets communicate remarkably little information despite being highly engineered objects. A typical tablet conveys identity through colour, size, shape, score lines and embossed text — channels constrained by surface area, human readability, manufacturing limits and regulatory convention.</p>
+      <p>This work proposes <b>PILLA (Parametric Information Layering Logic — Anatemnein)</b>: a geometric framework in which the manufactured surface of a tablet becomes a recursively addressable information substrate. Rather than a mere dosage form, the tablet is modelled as a stratified engineering boundary that simultaneously supports structural function, human interpretation, machine-readable identification and multiscale geometric encoding.</p>
+      <p>The framework unifies differential geometry, boundary representations, feature-based manufacturing and information theory into a single engineering architecture for pharmaceutical surfaces. This is presented as a <i>proposed engineering framework</i> — established components synthesised into a new architecture — not a finished mathematical theory.</p>
+    </div>
+
+    <div class="section" data-tab="The Problem">
+      <h2>1 — The Problem</h2>
+      <p>Medicines still rely on primitive identification. A tablet typically communicates only colour, approximate shape, embossed text, one or two score lines and manufacturer markings.</p>
+      <p>Yet the tablet already possesses a highly engineered three-dimensional boundary. Almost all of that geometric surface is unused as an information channel — faces, edges, feature boundaries, curvature and hierarchical geometry are treated as manufacturing artefacts rather than carriers.</p>
+      <table>
+        <tr><th>Current channel</th><th>Approx. capacity</th><th>Binding constraint</th></tr>
+        <tr><td>Colour</td><td>~10 bits</td><td>Human distinguishability, colour blindness</td></tr>
+        <tr><td>Embossed text</td><td>~50–100 bits</td><td>Readability, surface area</td></tr>
+        <tr><td>Shape</td><td>~10 bits</td><td>Manufacturing feasibility</td></tr>
+        <tr><td>Score lines</td><td>~5–10 bits</td><td>Mechanical integrity</td></tr>
+      </table>
+      <div class="box"><b>Total current capacity ≈ 100–150 bits</b> of reliable, human-readable information per tablet.</div>
+    </div>
+
+    <div class="section" data-tab="Opportunity">
+      <h2>2 — The Opportunity</h2>
+      <p>Every manufactured tablet already contains faces, edges, feature boundaries, curvature, tolerances and hierarchical geometry. Instead of treating these as artefacts, PILLA makes them an information architecture. <b>Geometry itself becomes communication.</b></p>
+      <div class="box"><b>Key insight:</b> the engineered boundary ∂T is not a constraint — it is the medium. Information is not <i>stored in</i> a tablet; the tablet's geometry <i>is</i> the information.</div>
+      <p>Leveraging the whole surface opens: multiscale geometry (faces → grooves → microfacets → nanotexture), topological features (face count, connectivity), curvature signatures, colour modulation (hue, saturation, brightness, fluorescence), surface texture and feature composition (grooves, bevels, facets, pits, ridges, embossing).</p>
+      <div class="box"><b>Estimated capacity: 1,000–10,000+ bits</b> per tablet across all scales and modalities, bounded by manufacturing resolution and observational capability.</div>
+    </div>
+
+    <div class="section" data-tab="Five Layers">
+      <h2>3 — Multi-Layer Communication Architecture</h2>
+      <p>Information exists simultaneously at several layers, each addressing a different observer and scale. These are <b>recursive geometric layers</b>, not software layers — different audiences read different resolutions of the same surface.</p>
+      <div class="box"><b>Layer 1 — Human recognition (macroscopic).</b> Colour, shape, size, logo, embossed name. Audience: patients, caregivers. Purpose: recognition, compliance. Timescale: seconds.</div>
+      <div class="box"><b>Layer 2 — Clinical recognition (mesoscale).</b> Score lines, groove orientation/count, bevel profile, subdivision marks. Audience: doctors, pharmacists, nurses. Purpose: strength verification, subdivision guidance. Timescale: 5–10 s.</div>
+      <div class="box"><b>Layer 3 — Optical machine recognition (microscale).</b> Structured micro-grooves, geometric glyphs, polygonal pits, orientation codes. Audience: pharmacy automation, hospital scanners, phones. Purpose: identification, authentication, inventory. Timescale: ms.</div>
+      <div class="box"><b>Layer 4 — High-density encoding (nanoscale).</b> Recursive surface partition, micro-facets, nested grooves, feature topology. Audience: regulators, forensics. Purpose: batch, lot, expiry, formulation, anti-counterfeiting.</div>
+      <div class="box"><b>Layer 5 — Manufacturing layer (subsurface).</b> Material composition, compression signature, die-wear fingerprint. Audience: QA, forensics. Detection: spectral analysis, metallography.</div>
+      <div class="diagram">Macroscopic (cm)  → Patient
+Mesoscale  (mm)   → Clinician
+Microscale (μm)   → Machine
+Nanoscale  (nm)   → Forensics
+
+Not software strata — the SAME object read at DIFFERENT magnification.
+Like a map: each zoom reveals different information on one surface.</div>
+    </div>
+
+    <div class="section" data-tab="Colour">
+      <h2>4 — Colour as Structured Information</h2>
+      <p>Current tablets already use colour. PILLA formalises it into a coordinate in the encoding space — no longer decoration.</p>
+      <table>
+        <tr><th>Dimension</th><th>Content</th><th>Example encoding</th></tr>
+        <tr><td>Hue</td><td>4–6 hues ≈ 2–3 bits</td><td>Blue = antibiotic, Red = cardiovascular</td></tr>
+        <tr><td>Saturation</td><td>3–4 levels ≈ 1.5–2 bits</td><td>Saturated = 500 mg, muted = 250 mg</td></tr>
+        <tr><td>Brightness</td><td>3–4 levels ≈ 1.5–2 bits</td><td>Bright = morning, dark = night</td></tr>
+        <tr><td>Pattern</td><td>gradient/bi/tri ≈ 2–3 bits</td><td>Gradient = extended release</td></tr>
+        <tr><td>Spectral</td><td>UV/IR/fluorescence ≈ 1–2 bits</td><td>Fluorescent = anti-counterfeit marker</td></tr>
+      </table>
+      <div class="box"><b>Example encoding:</b> top face Blue (drug class) · groove floor Yellow (500 mg) · left wall Green (morning) · right wall Red (evening) · microfacet pattern (batch). Colour becomes a <b>geometric attribute of a face</b> — 12–20 bits across the surface.</div>
+    </div>
+
+    <div class="section" data-tab="Geometry">
+      <h2>5 — Surface Geometry as Carrier</h2>
+      <p>Colour alone is insufficient. Geometry contributes independent information.</p>
+      <table>
+        <tr><th>Feature</th><th>Modality</th><th>Capacity</th></tr>
+        <tr><td>Face count</td><td>Topological</td><td>2–4 bits</td></tr>
+        <tr><td>Groove profile</td><td>Parametric shape</td><td>4–6 bits</td></tr>
+        <tr><td>Groove orientation/position</td><td>Feature placement</td><td>8 bits</td></tr>
+        <tr><td>Micro-facets</td><td>Recursive subdivision</td><td>10–50+ bits</td></tr>
+        <tr><td>Curvature signature</td><td>Differential geometry</td><td>5–10 bits</td></tr>
+      </table>
+      <h3>Groove kernel</h3>
+      <div class="math">G = (Γ, L, R, S)
+  Γ  cross-sectional profile  (V, U, trapezoidal, spline, polygonal)
+  L  sweep trajectory
+  R  orientation
+  S  optional scaling along the sweep</div>
+      <p>A groove encoding profile (3 bits) + orientation (4) + position (4) + depth (3) = 14 bits. A tablet with 4–6 grooves carries 56–84 bits of pure geometry.</p>
+      <h3>Recursive subdivision</h3>
+      <div class="diagram">F₁            Top face
+ └─ F₁.1        Groove
+     └─ F₁.1.L    Left wall
+         └─ F₁.1.L.M   Microfacet
+             └─ F₁.1.L.M.T   Micro-groove on the microfacet</div>
+    </div>
+
+    <div class="section" data-tab="Encoding">
+      <h2>6 — Encoding, Address & Grammar</h2>
+      <h3>Recursive address</h3>
+      <div class="diagram">Tablet 1 → Face 1.2 → Groove 1.2.1 → Left wall 1.2.1.L → Microfacet 1.2.1.L.4</div>
+      <p>Every geometric entity is uniquely addressable within the recursive decomposition (Axiom of Addressability).</p>
+      <h3>Feature calculus (non-commutative)</h3>
+      <div class="math">G(B(T)) ≠ B(G(T))
+grooving a bevelled tablet ≠ bevelling a grooved tablet
+→ feature operators form an operator calculus, generally non-commutative</div>
+      <h3>Feature grammar</h3>
+      <div class="math">Σ = { bevel, pit, ridge, facet, groove, colour, texture }   (alphabet)
+words     = feature sequences
+sentences = manufactured tablets
+language  = manufacturing</div>
+      <h3>Error-correcting geometry</h3>
+      <p>QR codes use Reed–Solomon. Geometry needs redundancy too: if three grooves encode one symbol and one groove abrades, the symbol should still recover. Wear makes capacity time-dependent — dX/dt = W(X, E).</p>
+    </div>
+
+    <div class="section" data-tab="Machine Vision">
+      <h2>7 — Machine Decoding</h2>
+      <div class="diagram">Image → Lens correction → Segmentation → Pose estimation
+      → 3D reconstruction → Surface unwrap → Feature graph
+      → Recursive parser → Decoder → Information</div>
+      <p>Unlike a QR code, the geometry is inseparable from the object — it cannot be photocopied onto a counterfeit. Depth is recovered via structured light, stereo, photometric stereo or time-of-flight to reconstruct microgeometry.</p>
+    </div>
+
+    <div class="section" data-tab="Clinical">
+      <h2>8 — Clinical Advantages</h2>
+      <p><b>Patients:</b> large visible markings, colour-guided dosing, reduced confusion, better compliance.</p>
+      <p><b>Doctors:</b> immediate identification, strength verification, subdivision guidance.</p>
+      <p><b>Pharmacists:</b> automated dispensing, inventory, authentication, verification.</p>
+      <p><b>Hospitals:</b> closed-loop administration, electronic verification, fewer medication errors.</p>
+      <p><b>Manufacturers:</b> traceability, counterfeit resistance, quality control, production analytics.</p>
+      <p><b>Regulators:</b> inspection, auditability, recall management, supply-chain transparency.</p>
+    </div>
+
+    <div class="section" data-tab="Mathematics">
+      <h2>9 — Mathematical Foundation</h2>
+      <p>Introduced only now — as the enabling framework, not the motivation.</p>
+      <div class="math">T ⊂ ℝ³                          manufactured solid
+∂T                              engineered boundary (the object of study)
+
+Stratification  𝒮 = (S₂, S₁, S₀)   surfaces / feature curves / vertices
+B-rep           ℬ = (F, E, V, 𝓘)   faces / edges / vertices / incidence
+
+Face = maximal connected regular surface patch bounded by feature curves.
+  → continuous curvature variation does NOT create a new face.
+
+Feature operators  Φᵢ : ℬ → ℬ′     bevel, chamfer, groove, pit, emboss, facet
+Recursion          Fᵢ ⇒ ℬᵢ          every face admits its own B-rep
+                   ℬ⁽⁰⁾ ⊃ ℬ⁽¹⁾ ⊃ ℬ⁽²⁾ ⊃ …   (finite, bounded by resolution)
+
+Curvature (per face)  H = (κ₁+κ₂)/2,  K = κ₁κ₂   independent of feature count</div>
+      <h3>Capacity</h3>
+      <div class="math">writable sites   N_s ≈ A_w / p²
+ideal bound      I_max ≲ N_s · log₂ M
+
+recoverable      I = f(A, p, Φ, R, M, O)
+   A usable area · p pitch · Φ alphabet · R resolution
+   M material/manufacturing · O observation/decoding</div>
+      <div class="box"><b>Central statement.</b> A manufactured boundary may be modelled as a recursively stratified engineering B-rep. Through a feature algebra acting on that boundary, the surface becomes a multiscale, addressable information substrate whose recoverable capacity is jointly constrained by geometry, manufacturability, metrology and observation.</div>
+    </div>
+
+    <div class="section" data-tab="3D Simulator">
+      <h2>10 — Interactive Simulator</h2>
+      <p>Drag to rotate. Change colours per face and per groove wall, adjust the grooves, type text to engrave onto the top face, and step through the recursive zoom to reveal deeper layers.</p>
+      <div class="simwrap">
+        <canvas id="sim"></canvas>
+        <div class="ctrl">
+          <h4>Recursive zoom (Layer)</h4>
+          <div class="zoombtns" id="zoombtns">
+            <button data-z="0" class="active">L1 macro</button>
+            <button data-z="1">L2 grooves</button>
+            <button data-z="2">L3 micro</button>
+          </div>
+          <h4>Layer 1 — colour</h4>
+          <div class="row"><label>Top face (drug class)</label><input type="color" id="cTop" value="#3366ff"></div>
+          <div class="row"><label>Bottom face</label><input type="color" id="cBot" value="#eeeeee"></div>
+          <h4>Layer 2 — groove encoding</h4>
+          <div class="row"><label>Groove floor (dose)</label><input type="color" id="cFloor" value="#ffd23f"></div>
+          <div class="row"><label>Left wall (morning)</label><input type="color" id="cLeft" value="#33cc55"></div>
+          <div class="row"><label>Right wall (evening)</label><input type="color" id="cRight" value="#ff3b3b"></div>
+          <div class="row"><label>Groove count</label><input type="range" id="gCount" min="0" max="3" value="1" step="1"></div>
+          <div class="row"><label>Groove depth</label><input type="range" id="gDepth" min="1" max="10" value="4"></div>
+          <h4>Engrave text (Anatemnein)</h4>
+          <div class="row"><input type="text" id="engrave" placeholder="type to engrave…" value="500"></div>
+          <h4>Display</h4>
+          <div class="row"><label>Auto-rotate</label><input type="checkbox" id="autorot" checked></div>
+          <div class="legend">
+            <span class="swatch" style="background:#3366ff"></span>Top = drug class<br>
+            <span class="swatch" style="background:#ffd23f"></span>Floor = dose strength<br>
+            <span class="swatch" style="background:#33cc55"></span>Left wall = morning dose<br>
+            <span class="swatch" style="background:#ff3b3b"></span>Right wall = evening dose
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-tab="Poster Critique">
+      <h2>11 — Critique of the Existing Posters</h2>
+      <p>The AI-generated poster misread the theory. Each conceptual error is marked below.</p>
+      <div class="err"><span class="cross">❌ 1 — "Layer" misread.</span> Shown as software/OSI strata. In PILLA layers are <b>recursive geometric layers</b> on one boundary; patient/doctor/machine are <b>audiences at different magnifications</b>, not stacked channels.</div>
+      <div class="err"><span class="cross">❌ 2 — Information floating in space.</span> Poster: information → layer → machine. PILLA: geometry <i>is</i> the information — it must live on faces, not hover beside them.</div>
+      <div class="err"><span class="cross">❌ 3 — Colour as decoration.</span> Colour is a parametric encoding dimension attached to specific faces (top = class, floor = dose, walls = timing).</div>
+      <div class="err"><span class="cross">❌ 4 — Grooves nearly absent.</span> Grooves are the central mechanism (G = Γ,L,R,S), not a minor detail.</div>
+      <div class="err"><span class="cross">❌ 5 — Face algebra gone.</span> No top/bottom/rim, no bevel/chamfer/groove/facet, no gross-vs-net face creation.</div>
+      <div class="err"><span class="cross">❌ 6 — Recursion shown as exploded disks.</span> It should be a zoom (map-like), not separated components.</div>
+      <div class="err"><span class="cross">❌ 7 — Mathematical hierarchy missing.</span> Topology → geometry → features → recursion → encoding → manufacturing → observation → decoding.</div>
+      <div class="err"><span class="cross">❌ 8 — Geometry demoted.</span> Everything looks like software; geometry must be primary — it survives wetting, wear and crushing.</div>
+      <div class="err"><span class="cross">❌ 9 — Human/machine as parallel channels.</span> They are one geometry at different resolutions.</div>
+      <div class="err"><span class="cross">❌ 10 — No pitch / capacity.</span> N_s ≈ A/p², I ≈ N_s·log₂M absent — capacity never quantified.</div>
+      <div class="err"><span class="cross">❌ 11 — No feature grammar.</span> Alphabet → words → sentences (tablets) → language (manufacturing).</div>
+      <div class="err"><span class="cross">❌ 12 — Logo not explained.</span> The mark shows the tablet writing — but never what it writes (onto its own surface).</div>
+      <div class="err"><span class="cross">❌ 13 — Information not on faces.</span> Floating labels instead of colour/geometry instantiated on named faces.</div>
+      <div class="err"><span class="cross">❌ 14 — Electronic/software confusion.</span> The root error: "information layering" read as microservices/OSI. It is recursive geometric layering.</div>
+      <div class="err"><span class="cross">❌ 15 — No mathematical centrepiece.</span> I = f(A,p,Φ,R,M,O) should dominate the visual.</div>
+      <p style="margin-top:20px"><span class="ok">✓ What it got right:</span> the tablet-writing metaphor, colour as a dimension, multiple audiences, and creative logo use — a good entry point, wrong development.</p>
+    </div>
+
+  </div>
+  <footer>© 1993–2026 Abhishek Choudhary · AyeAI · ORCID 0009-0002-0684-8320 · All rights reserved.</footer>
+</div>
+
+<script>
+/* ---------- tab navigation ---------- */
+(function(){
+  const sections=[...document.querySelectorAll('.section')];
+  const nav=document.getElementById('nav');
+  sections.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.textContent=s.dataset.tab;
+    if(i===0)b.classList.add('active');
+    b.onclick=()=>{
+      sections.forEach(x=>x.classList.remove('active'));
+      [...nav.children].forEach(x=>x.classList.remove('active'));
+      s.classList.add('active'); b.classList.add('active');
+      if(s.dataset.tab==='3D Simulator') setTimeout(resize,50);
+    };
+    nav.appendChild(b);
+  });
+})();
+
+/* ---------- three.js pill simulator (r128-safe) ---------- */
+let scene,camera,renderer,pill,canvas,W,H;
+const P={ top:0x3366ff, bot:0xeeeeee, floor:0xffd23f, left:0x33cc55, right:0xff3b3b,
+          grooves:1, depth:0.04, zoom:0, engrave:'500', autorot:true };
+
+function hex(v){ return parseInt(v.replace('#',''),16); }
+
+function init(){
+  canvas=document.getElementById('sim');
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0xeef2fa);
+  resize();
+  camera=new THREE.PerspectiveCamera(45,W/H,0.1,100);
+  camera.position.set(0,1.6,3.4);
+  camera.lookAt(0,0,0);
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W,H,false);
+
+  scene.add(new THREE.AmbientLight(0xffffff,0.7));
+  const d=new THREE.DirectionalLight(0xffffff,0.8); d.position.set(4,8,5); scene.add(d);
+  const p2=new THREE.PointLight(0x88aaff,0.4); p2.position.set(-4,2,3); scene.add(p2);
+
+  build();
+  bindControls();
+  animate();
+}
+
+function textTexture(txt){
+  const c=document.createElement('canvas'); c.width=c.height=256;
+  const g=c.getContext('2d');
+  g.clearRect(0,0,256,256);
+  if(txt && txt.trim()){
+    g.fillStyle='rgba(20,20,40,0.85)';
+    g.font='bold 90px Georgia';
+    g.textAlign='center'; g.textBaseline='middle';
+    g.fillText(txt.slice(0,6),128,128);
+  }
+  const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
+}
+
+function build(){
+  if(pill) scene.remove(pill);
+  pill=new THREE.Group(); scene.add(pill);
+
+  // biconvex tablet body: scaled sphere
+  const bodyGeo=new THREE.SphereGeometry(1,64,48);
+  bodyGeo.scale(1.3,0.42,1.0);
+  const body=new THREE.Mesh(bodyGeo,new THREE.MeshStandardMaterial(
+     {color:P.top,metalness:0.15,roughness:0.55}));
+  pill.add(body);
+
+  // bottom hemisphere colour (paint lower half via a second clipped shell)
+  const botGeo=new THREE.SphereGeometry(1.001,64,48,0,Math.PI*2,Math.PI/2,Math.PI/2);
+  botGeo.scale(1.3,0.42,1.0);
+  pill.add(new THREE.Mesh(botGeo,new THREE.MeshStandardMaterial(
+     {color:P.bot,metalness:0.15,roughness:0.55})));
+
+  // engraved text on top face
+  const eng=new THREE.Mesh(
+     new THREE.PlaneGeometry(1.0,1.0),
+     new THREE.MeshStandardMaterial({map:textTexture(P.engrave),transparent:true,
+        roughness:0.8,metalness:0,depthWrite:false}));
+  eng.rotation.x=-Math.PI/2; eng.position.y=0.43; pill.add(eng);
+
+  // Layer 2: grooves (only when zoom>=1, or always show count>0 lightly)
+  if(P.zoom>=1 && P.grooves>0){
+    const span=2.2, step=span/(P.grooves+1);
+    for(let i=1;i<=P.grooves;i++){
+      const x=-span/2 + step*i;
+      // floor
+      const floor=new THREE.Mesh(new THREE.BoxGeometry(0.06,P.depth,1.6),
+         new THREE.MeshStandardMaterial({color:P.floor,roughness:0.7}));
+      floor.position.set(x,0.42-P.depth/2,0); pill.add(floor);
+      // left wall
+      const lw=new THREE.Mesh(new THREE.BoxGeometry(0.012,P.depth,1.6),
+         new THREE.MeshStandardMaterial({color:P.left,roughness:0.6}));
+      lw.position.set(x-0.03,0.42-P.depth/2,0); pill.add(lw);
+      // right wall
+      const rw=new THREE.Mesh(new THREE.BoxGeometry(0.012,P.depth,1.6),
+         new THREE.MeshStandardMaterial({color:P.right,roughness:0.6}));
+      rw.position.set(x+0.03,0.42-P.depth/2,0); pill.add(rw);
+    }
+  }
+
+  // Layer 3: microfacet grid
+  if(P.zoom>=2){
+    const g=new THREE.Group();
+    for(let ix=-6;ix<=6;ix++) for(let iz=-4;iz<=4;iz++){
+      if(Math.random()<0.55){
+        const f=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.03,0.05),
+          new THREE.MeshStandardMaterial(
+            {color:new THREE.Color().setHSL(Math.random(),0.6,0.55),
+             metalness:0.6,roughness:0.3}));
+        f.position.set(ix*0.14, 0.44, iz*0.14);
+        g.add(f);
+      }
+    }
+    pill.add(g);
+  }
+
+  // camera distance by zoom
+  const dist=[3.4,2.4,1.7][P.zoom];
+  camera.position.set(0,dist*0.5,dist);
+  camera.lookAt(0,0,0);
+}
+
+/* mouse-drag rotation (no OrbitControls in r128) */
+let drag=false,px=0,py=0,ry=0,rx=0.2;
+function bindControls(){
+  canvas.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY;});
+  window.addEventListener('mouseup',()=>drag=false);
+  window.addEventListener('mousemove',e=>{
+    if(!drag)return; ry+=(e.clientX-px)*0.01; rx+=(e.clientY-py)*0.01;
+    rx=Math.max(-1.2,Math.min(1.2,rx)); px=e.clientX;py=e.clientY;
+  });
+  const bind=(id,fn)=>document.getElementById(id).addEventListener('input',fn);
+  bind('cTop',e=>{P.top=hex(e.target.value);build();});
+  bind('cBot',e=>{P.bot=hex(e.target.value);build();});
+  bind('cFloor',e=>{P.floor=hex(e.target.value);build();});
+  bind('cLeft',e=>{P.left=hex(e.target.value);build();});
+  bind('cRight',e=>{P.right=hex(e.target.value);build();});
+  bind('gCount',e=>{P.grooves=+e.target.value;build();});
+  bind('gDepth',e=>{P.depth=+e.target.value/100;build();});
+  bind('engrave',e=>{P.engrave=e.target.value;build();});
+  document.getElementById('autorot').addEventListener('change',e=>P.autorot=e.target.checked);
+  document.querySelectorAll('#zoombtns button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#zoombtns button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); P.zoom=+b.dataset.z; build();
+    };
+  });
+}
+
+function resize(){
+  if(!canvas) return;
+  W=canvas.clientWidth||canvas.parentElement.clientWidth;
+  H=canvas.clientHeight||520;
+  if(renderer){ renderer.setSize(W,H,false); camera.aspect=W/H; camera.updateProjectionMatrix(); }
+}
+window.addEventListener('resize',resize);
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(pill){
+    if(P.autorot && !drag) ry+=0.005;
+    pill.rotation.y=ry; pill.rotation.x=rx;
+  }
+  renderer.render(scene,camera);
+}
+
+if(typeof THREE!=='undefined') init();
+else document.getElementById('sim').outerHTML='<p style="padding:40px;color:#888">three.js failed to load — check network / CDN.</p>';
+</script>
+</body>
+</html>
