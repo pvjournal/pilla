@@ -36,3 +36,11 @@ Different observers read the **same** surface at different magnification.
 Abhishek Choudhary · AyeAI · ORCID 0009-0002-0684-8320
 
 **DOI:** 10.5281/zenodo.21764570
+
+<!-- trademarks:begin -->
+---
+AyeAI®, AyeCNSe® and AyeAM® are registered trademarks of Abhishek Choudhary in India, used and claimed worldwide since
+2019. The names of his products and projects are his trademarks; see [legal/TRADEMARKS.md](legal/TRADEMARKS.md). Code
+licences in this repository grant copyright permissions only and no right in any mark.
+© 1993–2026 Abhishek Choudhary. All rights reserved. AyeAI.
+<!-- trademarks:end -->
